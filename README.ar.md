@@ -72,22 +72,16 @@ npm run preview    # معاينة النسخة المبنية محلياً
 
 ## 🌍 النشر مجاناً على GitHub Pages
 
-يُنشَر هذا المستودع على GitHub Pages من فرع **`gh-pages`** الذي يحتوي على
-الموقع المبني (`dist/`). لتحديث الموقع بعد تعديل الشيفرة:
+يُنشَر هذا المستودع تلقائياً على GitHub Pages عند كل دفع إلى `main` عبر ملف العمل
+المُضمَّن ([`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)): يبني
+التطبيق (`npm run build`) وينشر مجلد `dist/`. الموقع متاح على
+`https://<username>.github.io/<repo>/`.
 
-```bash
-npm run build
-npx gh-pages -d dist        # أو ادفعي مجلد dist/ إلى فرع gh-pages
-```
+لإعداد ذلك على نسخة جديدة (fork):
 
-ثم فعّليه مرة واحدة من **Settings → Pages → Source: Deploy from a branch →
-`gh-pages` / root**. ستعمل الأداة على الرابط `https://<username>.github.io/<repo>/`.
-
-### اختياري: نشر تلقائي عند كل دفع (GitHub Actions)
-
-يوجد ملف عمل جاهز في [`docs/deploy.yml`](./docs/deploy.yml). لاستخدامه انقليه إلى
-`.github/workflows/deploy.yml`، ثم اضبطي **Settings → Pages → Source: GitHub
-Actions**. (دفع الملفات داخل `.github/workflows/` يتطلّب رمزاً بصلاحية `workflow`.)
+1. ادفعي المشروع إلى فرع `main`.
+2. في المستودع: **Settings → Pages → Source: GitHub Actions**.
+3. عندها يُعاد البناء والنشر تلقائياً عند كل دفع إلى `main`.
 
 يستخدم البناء مساراً نسبياً (`base: "./"`)، لذا يعمل كما هو أيضاً على Netlify وVercel وCloudflare Pages وأي استضافة ثابتة دون إعداد.
 

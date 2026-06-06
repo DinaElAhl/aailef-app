@@ -70,23 +70,16 @@ npm run preview    # serve the built bundle locally
 
 ## 🌍 Deploy (free) on GitHub Pages
 
-This repo is published on GitHub Pages from a **`gh-pages` branch** that holds the
-built site (`dist/`). To update the live site after changing the code:
+This repo auto-deploys to GitHub Pages on every push to `main` via the included
+workflow ([`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml)): it
+runs `npm run build` and publishes `dist/`. The site is live at
+`https://<username>.github.io/<repo>/`.
 
-```bash
-npm run build
-npx gh-pages -d dist        # or push the dist/ folder to the gh-pages branch
-```
+To set this up on a fresh fork:
 
-Then enable it once under **Settings → Pages → Source: Deploy from a branch →
-`gh-pages` / root**. Your tool goes live at `https://<username>.github.io/<repo>/`.
-
-### Optional: auto-deploy on every push (GitHub Actions)
-
-A ready-made workflow lives at [`docs/deploy.yml`](./docs/deploy.yml). To use it,
-move it to `.github/workflows/deploy.yml`, then set **Settings → Pages → Source:
-GitHub Actions**. (Pushing files under `.github/workflows/` requires a token with
-the `workflow` scope.)
+1. Push the project to the `main` branch.
+2. In the repo: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Every push to `main` then rebuilds and republishes automatically.
 
 The build uses a relative base path (`base: "./"` in `vite.config.js`), so it also
 works as-is on Netlify, Vercel, Cloudflare Pages, or any static host — no
@@ -110,7 +103,6 @@ configuration needed.
 - `src/aailef.js` — framework data + scoring math (the source of truth).
 - `src/api.js` — Claude client: prompt construction, JSON-Schema structured output, error handling.
 - `src/App.jsx` — UI (evaluate / history / guide / settings tabs).
-- `docs/deploy.yml` — optional GitHub Actions auto-deploy workflow (see Deploy section).
 
 Model: `claude-opus-4-8`. To change it, edit `MODEL` in `src/aailef.js`.
 
