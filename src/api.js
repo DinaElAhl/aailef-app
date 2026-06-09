@@ -12,7 +12,7 @@
 // parseable JSON in the exact shape we expect. No fragile ```json stripping.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { AXES, API_VERSION, MODEL, NO_ERROR } from "./aailef.js";
+import { AXES, ERRORS, API_VERSION, MODEL, NO_ERROR } from "./aailef.js";
 
 const ENDPOINT = "https://api.anthropic.com/v1/messages";
 
@@ -27,7 +27,7 @@ function buildSchema() {
     properties: {
       score: { type: "integer", enum: [1, 2, 3, 4, 5] },
       reason: { type: "string" },
-      error: { type: "string" },
+      error: { type: "string", enum: [...ERRORS.map((e) => e.id), NO_ERROR] },
     },
     required: ["score", "reason", "error"],
   };
@@ -82,7 +82,7 @@ ${axesBlock}
 رموز الأخطاء: ${errorBlock}.
 في حقل "error" لكل محور: ضع رمز الخطأ الأبرز المرتبط بذلك المحور (مثل "E5") إن وُجد خطأ فعلي، وإلا ضع "${NO_ERROR}".
 
-التزم بالموضوعية: استند إلى أدلة من النص، ولا تُجامل ولا تُقسُ بلا مبرر. اجعل "summary" تقييماً عاماً موجزاً (2–4 جمل)، و"recommendations" قائمة من 2 إلى 4 توصيات عملية لتحسين النص.`;
+التزم بالموضوعية: استند إلى أدلة من النص، ولا تُجامل ولا تُقسُ بلا مبرر. اجعل حقل "reason" لكل محور جملة واحدة موجزة تستشهد بدليل محدد من النص. واجعل "summary" تقييماً عاماً موجزاً (2–4 جمل)، و"recommendations" قائمة من 2 إلى 4 توصيات عملية لتحسين النص.`;
 }
 
 function buildUserPrompt({ text, task, reg }) {
@@ -122,10 +122,16 @@ export async function evaluate({ apiKey, text, task, reg, deepReasoning = true }
 
   const body = {
     model: MODEL,
-    max_tokens: 8000,
+    // Generous ceiling: max_tokens caps thinking + output together, so adaptive
+    // thinking across 10 axes needs headroom to avoid truncating the JSON.
+    // 16000 is the safe non-streaming default.
+    max_tokens: 16000,
     system: buildSystem(),
     messages: [{ role: "user", content: buildUserPrompt({ text, task, reg }) }],
-    output_config: { format: { type: "json_schema", schema: buildSchema() } },
+    output_config: {
+      format: { type: "json_schema", schema: buildSchema() },
+      effort: "high", // pin depth for consistent, reproducible scoring
+    },
   };
   if (deepReasoning) body.thinking = { type: "adaptive" };
 
@@ -161,6 +167,10 @@ export async function evaluate({ apiKey, text, task, reg, deepReasoning = true }
 
   if (data?.stop_reason === "refusal") {
     throw new Error("رفض النموذج تقييم هذا النص. جرّبي نصاً آخر.");
+  }
+
+  if (data?.stop_reason === "max_tokens") {
+    throw new Error("لم يكتمل التقييم لأن المخرجات تجاوزت الحد المسموح. اختصري النص ثم أعيدي المحاولة.");
   }
 
   // With structured outputs, the first text block is guaranteed valid JSON

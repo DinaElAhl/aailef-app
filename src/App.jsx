@@ -583,7 +583,7 @@ export default function App() {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
                         {ERRORS.map((e) => {
                           const found = Object.values(res.parsed.scores).some(
-                            (s) => s.error && s.error.includes(e.id)
+                            (s) => hasError(s?.error) && s.error.trim() === e.id
                           );
                           return (
                             <div
